@@ -1,4 +1,0 @@
-streamlit
-audio-recorder-streamlit
-openai
-sqlalchemy
