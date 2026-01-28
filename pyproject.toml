@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "audio-recorder-streamlit>=0.0.10",
     "openai>=2.16.0",
+    "psycopg2-binary>=2.9.11",
     "sqlalchemy>=2.0.46",
     "streamlit>=1.53.1",
     "streamlit-local-storage>=0.0.25",
