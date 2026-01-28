@@ -2,4 +2,3 @@ streamlit
 audio-recorder-streamlit
 openai
 sqlalchemy
-psycopg2-binary
