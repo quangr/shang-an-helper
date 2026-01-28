@@ -24,7 +24,7 @@ class InterviewAI:
             return f"语音转换失败: {str(e)}"
 
 
-    def get_score(self, question, answer, prompt_template=None, model="google/gemini-2.5-flash-lite"):
+    def get_score(self, question, answer, prompt_template=None, model="google/gemini-3-flash-preview"):
             # 默认模板
             default_template = """
             你是一位考公面试专家。请评价以下回答：

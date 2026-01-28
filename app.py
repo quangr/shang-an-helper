@@ -41,7 +41,28 @@ with st.sidebar:
     page = st.radio("前往", ["模拟面试", "历史记录"])
     st.divider()
     st.title("⚙️ 配置")
-    
+    model_options = {
+        "Gemini 3.0 Flash (最强大的模型)": "google/gemini-3-flash-preview",
+        "Gemini 2.5 Flash Lite（省钱快速）": "google/gemini-2.5-flash-lite",
+        "DeepSeek V3.2": "deepseek/deepseek-v3.2",
+        "小米模型": "xiaomi/mimo-v2-flash"
+    }
+    saved_model_id = localS.getItem("selected_model_id")
+    try:
+        default_index = list(model_options.values()).index(saved_model_id)
+    except:
+        default_index = 0
+
+    selected_model_display = st.selectbox(
+        "选择 AI 模型", 
+        options=list(model_options.keys()),
+        index=default_index
+    )
+    selected_model_id = model_options[selected_model_display]
+
+    # 当模型改变时，保存到本地存储
+    if selected_model_id != saved_model_id:
+        localS.setItem("selected_model_id", selected_model_id, key="set_model_action")
     # --- 1. 读取逻辑 (getItem 不传 key) ---
     # 尝试从浏览器获取现有值
     saved_or = localS.getItem("openrouter_api_key")
@@ -88,11 +109,10 @@ with st.sidebar:
 题目：{question}
 回答：{answer}
 
-请按照以下维度打分（每项10分）：
-1. 政治觉悟
-2. 逻辑思维
-3. 语言表达
-最后给出改进建议。"""
+我需要你按照以下格式给出反馈：
+1. 说明根据题目内容说明回答思路，如何切入，特别是根据回答指出不足之处。注意每一个思路都必须有具体例子言之有物；
+2. 根据我的回答内容，指出根据我的风格如何以最小的改进获得最大的提升，给出具体的回答例子。
+"""
 
     user_template = st.text_area(
         "自定义 Prompt", 
@@ -115,9 +135,16 @@ st.title("🚀 考公面试 AI 练习")
 if page == "模拟面试":
     st.title("🎙️ 面试练习")
     
-    # 1. 用户输入题目
+    # 增加一个重置按钮在顶部，方便用户随时开启新题
+    if st.session_state.get("transcript"):
+        if st.button("🆕 开启新题目"):
+            # 清除相关 session 状态
+            for key in ["transcript", "last_audio"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+
     custom_q = st.text_input("请输入面试题目：", placeholder="例如：谈谈你对‘为人民服务’的理解")
-    
     if custom_q:
         st.info(f"**当前题目：** {custom_q}")
         
@@ -147,14 +174,25 @@ if page == "模拟面试":
                         result = ai.get_score(
                             question=custom_q, 
                             answer=corrected_text, 
-                            prompt_template=user_template
+                            prompt_template=user_template,
+                            model=selected_model_id
                         )
+                        st.markdown("---")
                         st.markdown(result)
-                        
-                        # --- 核心修改：保存到本地 JSON ---
-                        RemoteStorage.save_record(custom_q, corrected_text, result)
-                        st.success("练习记录已自动保存！")
 
+                        RemoteStorage.save_record(custom_q, corrected_text, result)
+                        st.success("✅ 练习已保存！")
+                        col_nav1, col_nav2 = st.columns(2)
+                        with col_nav1:
+                            if st.button("➡️ 练习下一题"):
+                                # 清除状态并刷新
+                                for key in ["transcript", "last_audio"]:
+                                    st.session_state.pop(key, None)
+                                st.rerun()
+                        with col_nav2:
+                            if st.button("📜 前往查看历史记录"):
+                                # 这里的逻辑需要配合侧边栏 radio 的 index
+                                st.info("请在左侧菜单点击 '历史记录'")
 # --- 页面 2：历史记录 ---
 elif page == "历史记录":
     st.title("📜 练习历史")
